@@ -26,7 +26,7 @@ client = AzureOpenAI(
 # Setup SearchClient
 search_client = SearchClient(
     endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
-    index_name = "nestle-test-index",
+    index_name = "nestle-test",
     credential = AzureKeyCredential(os.getenv("AZURE_AI_SEARCH_KEY"))
 )
 
@@ -46,13 +46,18 @@ EXTRA_URLS = [
     {"title": "Sustainable Cocoa", "url": "https://www.madewithnestle.ca/unwrap-some-good"},
     {"title": "About Us Corporate", "url": "https://www.corporate.nestle.ca/en/aboutus"},
     {"title": "Sustainability", "url": "https://www.corporate.nestle.ca/en/what-creating-shared-value"},
-    {"title": "Community", "url": "https://www.corporate.nestle.ca/en/aboutus/community"}
+    {"title": "Community", "url": "https://www.corporate.nestle.ca/en/aboutus/community"},
+    {"title": "Generation Regeneration", "url": "hhttps://www.corporate.nestle.ca/en/planet/generation-regeneration"},
+    {"title": "Sustainable Sourcing", "url": "https://www.corporate.nestle.ca/en/creatingsharedvalue/environment/sustainable%20sourcing"},
+    {"title": "Sustainable Packaging", "url": "https://www.corporate.nestle.ca/en/creatingsharedvalue/environment/packaging"},
+    {"title": "Child Forced Labour", "url": "https://www.corporate.nestle.ca/en/planet/child-forced-labour"},
+    {"title": "Taste and Nutrition", "url": "https://www.corporate.nestle.ca/en/taste-nutrition-our-core-0"}
 ]
 
 # Scraper for non-recipe URLs
 async def scrape_informational_page(page, item):
     try:
-        await page.goto(item["url"], wait_until="networkidle", timeout=60000)
+        await page.goto(item["url"], wait_until="domcontentloaded", timeout=60000)
         content = await page.content()
 
         soup = BeautifulSoup(content, "html.parser")
@@ -82,7 +87,7 @@ async def scrape_informational_page(page, item):
 
 
 # Get All Recipe Links
-async def get_recipe_links(page, max_pages=1):
+async def get_recipe_links(page, max_pages=30):
     recipes = []
 
     for page_num in range(max_pages):
@@ -178,7 +183,7 @@ Tags: {tags or "N/A"}"""
         recipe["instructions"] = instructions
         recipe["skill_level"] = skill_level
         recipe["servings"] = servings
-        recipe["tags"] = tags
+        recipe["tags"] = tags or []
         recipe["id"] = base64.urlsafe_b64encode(recipe["url"].encode()).decode()
 
         response = client.embeddings.create(
@@ -247,16 +252,18 @@ def insert_recipe(tx, recipe):
         )
     """,
     id=recipe["id"],
-    title=recipe["title"].strip().lower(),
-    url=recipe["url"],
-    image=recipe["image"],
-    time=recipe["time"],
-    instructions="\n".join(recipe["instructions"]),
-    servings=recipe["servings"],
+    title = (recipe.get("title") or "").strip().lower(),
+    url = recipe.get("url") or "",
+    image = recipe.get("image") or "",
+    time = recipe.get("time") if recipe.get("time") is not None else 0,
+    instructions = "\n".join(recipe.get("instructions") or []),
+    servings = recipe.get("servings") or 0,
     skill_level=(recipe.get("skill_level") or "Unknown").strip().lower(),
-    tags=[tag.strip().lower() for tag in recipe.get("tags", [])],
+    tags=[tag.strip().lower() for tag in (recipe.get("tags") or [])],
     parsed_ingredients=[
-        {"name": name, "count": count} for name, count in parsed_ingredients
+        {"name": name, "count": count}
+        for name, count in parsed_ingredients
+        if name and name != "N/A"
     ]
 )
     

@@ -29,7 +29,7 @@ client = AzureOpenAI(
 # Setup the SearchClient
 search_client = SearchClient(
     endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
-    index_name = "nestle-test-index",
+    index_name = "nestle-test",
     credential = AzureKeyCredential(os.getenv("AZURE_AI_SEARCH_KEY"))
 )
 
