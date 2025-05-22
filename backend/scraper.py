@@ -175,7 +175,7 @@ Instructions:
 Skill Level: {skill_level or "N/A"}
 Servings: {servings or "N/A"}
 Time: {recipe.get("time") or "N/A"}
-Link: {recipe.get("id") or "N/A"}
+Link: {recipe.get("url") or "N/A"}
 Tags: {tags or "N/A"}"""
 
         # Add details to existing recipe card data

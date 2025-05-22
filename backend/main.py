@@ -29,7 +29,7 @@ client = AzureOpenAI(
 # Setup the SearchClient
 search_client = SearchClient(
     endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
-    index_name = "nestle-test",
+    index_name = "nestle-test-index",
     credential = AzureKeyCredential(os.getenv("AZURE_AI_SEARCH_KEY"))
 )
 
@@ -68,14 +68,15 @@ async def chat(req: ChatRequest):
                 "You are an AI assistant for the MadeWithNestle.ca website. "
                 "Users often ask vague or informal questions about recipes. "
                 "Your task is to determine whether a user's query is best served by:\n"
-                "1. The vector database (for general non-recipe related, or recipes where the user has no direction or specific ingredients they want), or\n"
+                "1. The vector database (for general nestle questions, or recipes where the user does not mention any ingredients or time or difficulty), or\n"
                 "2. The graph database (for recipe queries that include ingredients, time requests, tags such as Drinks or difficulties) Make the prompt simple and don't ask for anything extra.\n\n"
-                "First, classify the query as either 'vector' or 'graph' depending on its structure and specificity. "
-                "Then, rewrite the query to make it more relevant and descriptive for retrieval.\n\n"
+                "3. \"reply\" – if the user is asking a question that does not mention Nestle at all (e.g., 'Who are you?', 'What can you do?'). In this case, provide a direct response.\n\n"
+                "First, classify the query as either 'vector', 'graph' or 'reply' depending on its structure and specificity. "
+                "Then, rewrite the query to make it more relevant and descriptive for retrieval. If target is 'reply', this should be a direct response to the user's question.\n\n"
                 "Respond in the following format:\n"
                 "```\n"
                 "{\n"
-                "  \"target\": \"vector\" | \"graph\",\n"
+                "  \"target\": \"vector\" | \"graph\" | \"reply\",\n"
                 "  \"rewritten_query\": \"...\"\n"
                 "}\n"
                 "```"
@@ -104,6 +105,9 @@ async def chat(req: ChatRequest):
     except Exception as e:
         return {"error": f"Failed to parse response: {str(e)}"}
     
+    if target == "reply":
+        return f"Response : {rewritten_query}"
+
     if target == "vector":
         # Generate embedding for the query
         embedding_response = client.embeddings.create(
@@ -163,7 +167,7 @@ async def chat(req: ChatRequest):
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful madewithnestle.ca assistant."},
-            {"role": "user", "content": f"Answer the following question using only the context below. I want it to also include the link in the context at the last sentence.\n\nContext:\n{context}\n\nQuestion: {prompt}"}
+            {"role": "user", "content": f"Answer the following question. I want it to include all the links that is useful to the question. Do not mention that I have provided context. Act as if you are an AI assistant with the information already. Be more general and don't use too many words. And if anything is N/A, don't include it in the response.\n\nContext:\n{context}\n\nQuestion: {prompt}"}
         ],
         temperature=0.7
     )
