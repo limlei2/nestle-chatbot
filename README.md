@@ -7,8 +7,8 @@ Built with React, FastAPI, Playwright, Azure AI Search, Azure OpenAI, and Neo4j.
 
 ### Prerequisites
 
-- Node.js 18+
-- Python 3.11+
+- Node.js
+- Python 3.11
 - Neo4j
 - Azure OpenAI + Azure AI Search
 
