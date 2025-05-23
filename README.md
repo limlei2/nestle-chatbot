@@ -51,3 +51,13 @@ NEO4J_PASSWORD=
 2. Run `npm install` to install all required dependencies.
 3. Run `npm start` to start development server on http://localhost:3000
 
+## Technologies and Frameworks Used
+
+- React.js — Frontend interface for the chatbot.
+- FastAPI — Python web framework powering the backend API.
+- Playwright (async) — Used to scrape the entire madewithnestle.ca website.
+- BeautifulSoup — HTML parsing and content cleaning for scraper preprocessing.
+- Neo4j — Graph database used to store structured recipe information with relationships between recipes, ingredients, skill level, and tags.
+- Azure OpenAI — Powers the chatbot’s conversational responses using retrieval-augmented generation (RAG), and used to embed text for the vector database.
+- Azure AI Search — Vector search engine for semantic retrieval of recipe and site content using embeddings.
+
