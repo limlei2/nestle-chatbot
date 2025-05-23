@@ -2,6 +2,7 @@ import os
 import json
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
@@ -29,7 +30,7 @@ client = AzureOpenAI(
 # Setup the SearchClient
 search_client = SearchClient(
     endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT"),
-    index_name = "nestle-test-index",
+    index_name = os.getenv("AZURE_AI_SEARCH_INDEX"),
     credential = AzureKeyCredential(os.getenv("AZURE_AI_SEARCH_KEY"))
 )
 
@@ -52,6 +53,14 @@ llm = AzureChatOpenAI(
 # Create FastAPI app instance
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Define the structure of incoming JSON data
 class ChatRequest(BaseModel):
     message: str
@@ -68,8 +77,8 @@ async def chat(req: ChatRequest):
                 "You are an AI assistant for the MadeWithNestle.ca website. "
                 "Users often ask vague or informal questions about recipes. "
                 "Your task is to determine whether a user's query is best served by:\n"
-                "1. The vector database (for general nestle questions, or recipes where the user does not mention any ingredients or time or difficulty), or\n"
-                "2. The graph database (for recipe queries that include ingredients, time requests, tags such as Drinks or difficulties) Make the prompt simple and don't ask for anything extra.\n\n"
+                "1. The graph database (for recipe queries that mention any ingredients, time requests, tags such as Drinks or difficulties) Make the prompt simple and don't ask for anything extra.\n\n"
+                "2. The vector database (for general nestle questions, or any recipe prompts that do not mention anything that could be used to query with the graph database, or\n"
                 "3. \"reply\" – if the user is asking a question that does not mention Nestle at all (e.g., 'Who are you?', 'What can you do?'). In this case, provide a direct response.\n\n"
                 "First, classify the query as either 'vector', 'graph' or 'reply' depending on its structure and specificity. "
                 "Then, rewrite the query to make it more relevant and descriptive for retrieval. If target is 'reply', this should be a direct response to the user's question.\n\n"
@@ -106,7 +115,9 @@ async def chat(req: ChatRequest):
         return {"error": f"Failed to parse response: {str(e)}"}
     
     if target == "reply":
-        return f"Response : {rewritten_query}"
+        return {
+            "response" : rewritten_query
+        }
 
     if target == "vector":
         # Generate embedding for the query
@@ -119,7 +130,7 @@ async def chat(req: ChatRequest):
         vector_query = VectorizedQuery(
             kind="vector",
             vector=query_vector,
-            k_nearest_neighbors=3,
+            k_nearest_neighbors=10,
             fields="embedding"
         )
         # Search Azure AI Search index
@@ -138,6 +149,7 @@ async def chat(req: ChatRequest):
         you should generalize by using `toLower(variable) CONTAINS 'substring'` instead of exact matches.
         Avoid `=` at all times.
         Normalize all text comparisons using `toLower()`.
+        Also, return r.title, r.url, r.image and r.instructions
 
         Graph Schema:
         {schema}
@@ -166,12 +178,36 @@ async def chat(req: ChatRequest):
     chat_response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are a helpful madewithnestle.ca assistant."},
-            {"role": "user", "content": f"Answer the following question. I want it to include all the links that is useful to the question. Do not mention that I have provided context. Act as if you are an AI assistant with the information already. Be more general and don't use too many words. And if anything is N/A, don't include it in the response.\n\nContext:\n{context}\n\nQuestion: {prompt}"}
+            {
+                "role": "system",
+                "content": "You are a helpful madewithnestle.ca assistant."
+            },
+            {
+                "role": "user",
+                "content": f"""You are a helpful assistant for madewithnestle.ca.
+                    Use the provided context to answer the user's question accurately and conversationally.
+                    Be concise, friendly, and avoid generic or verbose language.
+
+                    Formatting rules:
+                    • Do not mention that you are using context or that you're an AI.
+                    • Do not include 'N/A' values.
+                    • Use line breaks only when necessary—never two in a row.
+                    • If listing multiple items, use bullet points starting with '•' like this:
+                    • TITLE: Description (include full clickable link if available)
+                    • Always ensure links are clearly visible and fully included (no markdown hiding).
+                    • Avoid images, extra spacing, or generic disclaimers.
+                    • Final answer must be under 200 words and directly useful to the user.
+
+                    Context:
+                    {context}
+
+                    Question:
+                    {prompt}"""
+
+            }
         ],
         temperature=0.7
     )
-
     return {
         "target": target,
         "rewritten_query": rewritten_query,
