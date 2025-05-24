@@ -61,3 +61,4 @@ NEO4J_PASSWORD=
 - Azure OpenAI — Powers the chatbot’s conversational responses using retrieval-augmented generation (RAG), and used to embed text for the vector database.
 - Azure AI Search — Vector search engine for semantic retrieval of recipe and site content using embeddings.
 
+## Limitations
