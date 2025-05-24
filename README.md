@@ -62,4 +62,9 @@ NEO4J_PASSWORD=
 - Azure OpenAI — Powers the chatbot’s conversational responses using retrieval-augmented generation (RAG), and used to embed text for the vector database.
 - Azure AI Search — Vector search engine for semantic retrieval of recipe and site content using embeddings.
 
-## Limitations
+## Limitations Due to Time Constraints and Available Resources
+- No Chat Memory: The chatbot does not retain conversation history across turns. Each query is processed independently, which limits its ability to provide follow-up responses or maintain context over time.
+- GraphRAG Scope: While this project uses GraphRAG for recipes, the same architecture could be extended to other structured domains like product catalogs and such. Currently, the system is tailored only to food/recipe data.
+- Manual re-scraping is required to refresh content in the database and search index.
+- Limited Search Ranking Controls: Azure AI Search ranking is based solely on vector similarity, without any custom ranking rules or boosting logic.
+- Ingredient Parsing Edge Cases: The ingredient parser may fail on non-standard formats (e.g., “a pinch of salt”, or “½ stick of butter”), which can affect the quality of graph relationships.
