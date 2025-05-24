@@ -191,10 +191,10 @@ async def chat(req: ChatRequest):
                     Formatting rules:
                     • Do not mention that you are using context or that you're an AI.
                     • Do not include 'N/A' values.
-                    • Use line breaks only when necessary—never two in a row.
+                    • Never use 2 line breaks in a row. Limit line breaks to only when necessary
                     • If listing multiple items, use bullet points starting with '•' like this:
-                    • TITLE: Description (include full clickable link if available)
-                    • Always ensure links are clearly visible and fully included (no markdown hiding).
+                    • TITLE: Description
+                    • Always ensure links are bolded and underlined and in a new line.
                     • Avoid images, extra spacing, or generic disclaimers.
                     • Final answer must be under 200 words and directly useful to the user.
 
