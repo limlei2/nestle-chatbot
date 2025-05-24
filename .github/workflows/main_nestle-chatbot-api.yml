@@ -13,7 +13,8 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,7 +25,7 @@ jobs:
         run: |
           pip install -r backend/requirements.txt
 
-      - name: Zip backend folder for deployment
+      - name: Zip backend folder contents only
         run: |
           cd backend
           zip -r ../release.zip .
@@ -40,34 +41,27 @@ jobs:
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write
       contents: read
-  
+
     steps:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: python-app
-  
-      - name: Unzip for deployment
-        run: |
-          mkdir output
-          unzip release.zip -d output
-  
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D4EF2415FFF140249C30859F4940ADD5 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_855AB7FBC56444E08D0ED48F178C3315 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2FCC250B575446039D36DD65C829910D }}
-  
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'nestle-chatbot-api'
           slot-name: 'Production'
-          package: output
-  
+          package: release.zip
