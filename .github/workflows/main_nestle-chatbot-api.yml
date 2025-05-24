@@ -62,12 +62,6 @@ jobs:
         with:
           name: python-app
 
-      - name: Unzip artifact for deployment
-        run: |
-          mkdir output
-          unzip release.zip -d output
-
-      
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -81,4 +75,4 @@ jobs:
         with:
           app-name: 'nestle-chatbot-api'
           slot-name: 'Production'
-          package: output
+          package: release.zip
