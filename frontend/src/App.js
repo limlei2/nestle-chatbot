@@ -22,13 +22,25 @@ function App() {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const TypingIndicator = () => (
+    <motion.div
+      className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-100 text-blue-900 text-xs"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <span className="dot bg-blue-900 w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0s]" />
+      <span className="dot bg-blue-900 w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0.2s]" />
+      <span className="dot bg-blue-900 w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0.4s]" />
+    </motion.div>
+  );
+
   const sendMessage = async () => {
     const userInput = input.trim();
     if (!userInput) return;
     setMessages((prev) => [...prev, { role: 'user', content: userInput }]);
     setInput('');
     setLoading(true);
-    setMessages((prev) => [...prev, { role: 'bot', content: '...' }]);
 
     try {
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/chat`, {
@@ -37,13 +49,13 @@ function App() {
       console.log(response.data);
       const backendResponse = response.data.response || 'Sorry, something went wrong.';
       setMessages((prev) => [
-        ...prev.slice(0, -1),
+        ...prev,
         { role: 'bot', content: backendResponse },
       ]);
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages((prev) => [
-        ...prev.slice(0, -1),
+        ...prev,
         { role: 'bot', content: 'There was an error processing your request.' },
       ]);
     } finally {
@@ -122,6 +134,11 @@ function App() {
                 </div>
                 
               ))}
+              {loading && (
+                <div className="flex justify-start">
+                  <TypingIndicator />
+                </div>
+              )}
               <div ref={messageEndRef} />
             </div>
 
