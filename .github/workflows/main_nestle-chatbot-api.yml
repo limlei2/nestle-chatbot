@@ -68,18 +68,15 @@ jobs:
         run: ls -al
 
       - name: Rename release.zip to prepare for deploy
-        run: mv python-app/release.zip myapp.zip
-  
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D4EF2415FFF140249C30859F4940ADD5 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_855AB7FBC56444E08D0ED48F178C3315 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2FCC250B575446039D36DD65C829910D }}
-  
+        run: mv release.zip myapp.zip
+        
+      - name: List files in working directory
+        run: ls -al
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'nestle-chatbot-api'
           slot-name: 'Production'
           package: myapp.zip
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
