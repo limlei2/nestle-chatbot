@@ -70,8 +70,8 @@ jobs:
       - name: Rename release.zip to prepare for deploy
         run: mv release.zip myapp.zip
         
-      - name: List files in working directory
-        run: ls -al
+      - name: Verify myapp.zip structure
+        run: unzip -l myapp.zip
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
