@@ -15,6 +15,7 @@ function App() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  console.log(process.env.REACT_APP_BACKEND_URL)
 
   const messageEndRef = useRef(null);
 
