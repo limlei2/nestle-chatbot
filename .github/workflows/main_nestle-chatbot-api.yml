@@ -63,9 +63,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-app
-  
+
+      - name: List files in working directory
+        run: ls -al
+
       - name: Rename release.zip to prepare for deploy
-        run: mv release.zip myapp.zip
+        run: mv python-app/release.zip myapp.zip
   
       - name: Login to Azure
         uses: azure/login@v2
